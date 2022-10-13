@@ -12,7 +12,7 @@ get_header();
 
 		else :
       
-      echo "No reviews";
+      echo "No cases";
 
 		endif;
 

@@ -9,7 +9,7 @@
 
 if ( ! defined( '_S_VERSION' ) ) {
 	// Replace the version number of the theme on each release.
-	define( '_S_VERSION', '1.0.0' );
+	define( '_S_VERSION', '1.1' );
 }
 
 /**
@@ -50,7 +50,9 @@ function wayup_setup() {
 	register_nav_menus(
 		array(
 			'menu-header' => esc_html__( 'Header Navigation', 'wayup' ),
-			'menu-footer' => esc_html__( 'Footer Navigation 1', 'wayup' ),
+			'menu-footer-1' => esc_html__( 'Footer Navigation 1', 'wayup' ),
+			'menu-footer-2' => esc_html__( 'Footer Navigation 2', 'wayup' ),
+
 
 		)
 	);
@@ -101,6 +103,10 @@ function wayup_setup() {
 			'flex-height' => true,
 		)
 	);
+
+
+  add_image_size('testimonial-thumb', 225, 131, true);
+
 }
 add_action( 'after_setup_theme', 'wayup_setup' );
 
@@ -165,6 +171,10 @@ if ( defined( 'JETPACK__VERSION' ) ) {
 	require get_template_directory() . '/inc/jetpack.php';
 }
 
+require get_template_directory() . '/inc/options-panel-redux.php';
+require get_template_directory() . '/inc/breadcrums.php';
+require get_template_directory() . '/inc/metaboxes.php';
+
 //========================================================================================================================================================
 
 
@@ -172,25 +182,38 @@ if ( defined( 'JETPACK__VERSION' ) ) {
  * Enqueue scripts and styles.
  */
 function wayup_scripts() {
-	wp_enqueue_style( 'wayup-style', get_stylesheet_uri(), array(), _S_VERSION );
-	wp_enqueue_style( 'wayup-vendor', get_template_directory_uri().'/assets/css/vendor.min.css', array(),  );	
-	wp_enqueue_style( 'wayup-main', get_template_directory_uri().'/assets/css/main.min.css', array(),  );
+	wp_enqueue_style( 'wayup-style', get_stylesheet_uri() );
+	wp_enqueue_style( 'wayup-vendor', get_template_directory_uri().'/assets/css/vendor.min.css', array(), _S_VERSION );	
+	wp_enqueue_style( 'wayup-main', get_template_directory_uri().'/assets/css/main.min.css', array(), _S_VERSION );
 
   wp_style_add_data( 'wayup-style', 'rtl', 'replace' );
 
 	wp_enqueue_script( 'jquery3.1.1', 'http://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js');
-	wp_enqueue_script( 'goodshare', 'https://cdn.jsdelivr.net/npm/goodshare.js@4/goodshare.min.js', array(), _S_VERSION, true);
+	wp_enqueue_script( 'goodshare', 'https://cdn.jsdelivr.net/npm/goodshare.js@4/goodshare.min.js', array(), '', true);
 
 	wp_enqueue_script( 'wayup-vendor', get_template_directory_uri() . '/assets/js/vendor.min.js', array(), _S_VERSION, true );
 	wp_enqueue_script( 'wayup-common', get_template_directory_uri() . '/assets/js/common.min.js', array(), _S_VERSION, true );
 
-	wp_enqueue_script( 'wayup-svg-sprite', get_template_directory_uri() . '/assets/img/svg-sprite/svg-sprite.js', array(), _S_VERSION, false );
+	wp_enqueue_script( 'wayup-svg-sprite', get_template_directory_uri() . '/assets/img/svg-sprite/svg-sprite.js', array(), '1.0', false );
 
 	if ( is_singular() && comments_open() && get_option( 'thread_comments' ) ) {
 		wp_enqueue_script( 'comment-reply' );
 	}
 }
 add_action( 'wp_enqueue_scripts', 'wayup_scripts' );
+
+//========================================================================================================================================================
+
+function wayap_admin_scripts($hook) {
+	
+	// Add scripts for metaboxes
+  	if ( $hook == 'post.php' || $hook == 'post-new.php' || $hook == 'page-new.php' || $hook == 'page.php' ) {
+		wp_enqueue_script( 'aletheme_metaboxes', get_template_directory_uri() . '/assets/js/metaboxes.js', array( 'jquery', 'jquery-ui-core', 'jquery-ui-datepicker', 'media-upload', 'thickbox') );
+  	}
+	
+}
+add_action( 'admin_enqueue_scripts', 'wayap_admin_scripts', 10 );
+
 
 //========================================================================================================================================================
 
@@ -202,4 +225,135 @@ function wayup_body_class( $classes) {
     $classes[]='inner-page';
   }
   return $classes;
+}
+
+//========================================================================================================================================================
+
+function wayup_register_custom_post_type() {
+   
+  register_post_type( 'testimonial', array(
+    'labels'             => array(
+      'name'                  => _x( 'Reviews', 'Post type general name', 'wayup' ),
+      'singular_name'         => _x( 'Review', 'Post type singular name', 'wayup' ),
+      'add_new'               => __( 'Add New', 'wayup' ),
+  ),
+    'description'        => 'Recipe custom post type.',
+    'public'             => true,
+    'publicly_queryable' => true,
+    'show_ui'            => true,
+    'show_in_menu'       => true,
+    'query_var'          => true,
+    'rewrite'            => array( 'slug' => 'testimonials' ),
+    'capability_type'    => 'post',
+    'has_archive'        => true,
+    'hierarchical'       => false,
+    'menu_position'      => 20,
+    'menu_icon'          => 'dashicons-testimonial',
+    'supports'           => array( 'title', 'editor', 'thumbnail' ),
+    'taxonomies'         => array( 'category', 'post_tag' ),
+    'show_in_rest'       => true,
+) );
+register_post_type( 'service', array(
+  'labels'             => array(
+    'name'                  => _x( 'Services', 'Post type general name', 'wayup' ),
+    'singular_name'         => _x( 'Service', 'Post type singular name', 'wayup' ),
+    'add_new'               => __( 'Add New', 'wayup' ),
+),
+  'description'        => 'Recipe custom post type.',
+  'public'             => true,
+  'publicly_queryable' => true,
+  'show_ui'            => true,
+  'show_in_menu'       => true,
+  'query_var'          => true,
+  'rewrite'            => array( 'slug' => 'services' ),
+  'capability_type'    => 'post',
+  'has_archive'        => true,
+  'hierarchical'       => false,
+  'menu_position'      => 20,
+  'supports'           => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+  'taxonomies'         => array( 'category', 'post_tag' ),
+  'show_in_rest'       => true,
+  'menu_icon'          => 'dashicons-megaphone',
+
+) );
+register_post_type( 'news', array(
+  'labels'             => array(
+    'name'                  => _x( 'News', 'Post type general name', 'wayup' ),
+    'singular_name'         => _x( 'News', 'Post type singular name', 'wayup' ),
+    'add_new'               => __( 'Add New', 'wayup' ),
+),
+  'description'        => 'Recipe custom post type.',
+  'public'             => true,
+  'publicly_queryable' => true,
+  'show_ui'            => true,
+  'show_in_menu'       => true,
+  'query_var'          => true,
+  'rewrite'            => array( 'slug' => 'news' ),
+  'capability_type'    => 'post',
+  'has_archive'        => true,
+  'hierarchical'       => false,
+  'menu_position'      => 20,
+  'supports'           => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+  'taxonomies'         => array( 'category', 'post_tag' ),
+  'show_in_rest'       => true,
+  'menu_icon'          => 'dashicons-format-aside',
+) );
+register_post_type( 'feature', array(
+  'labels'             => array(
+    'name'                  => _x( 'Cases', 'Post type general name', 'wayup' ),
+    'singular_name'         => _x( 'Case', 'Post type singular name', 'wayup' ),
+    'add_new'               => __( 'Add New', 'wayup' ),
+),
+  'description'        => 'Recipe custom post type.',
+  'public'             => true,
+  'publicly_queryable' => true,
+  'show_ui'            => true,
+  'show_in_menu'       => true,
+  'query_var'          => true,
+  'rewrite'            => array( 'slug' => 'feature' ),
+  'capability_type'    => 'post',
+  'has_archive'        => true,
+  'hierarchical'       => false,
+  'menu_position'      => 20,
+  'supports'           => array( 'title', 'editor', 'thumbnail', 'excerpt' ),
+  'taxonomies'         => array( 'category', 'post_tag' ),
+  'show_in_rest'       => true,
+  'menu_icon'          => 'dashicons-saved',
+) );
+
+}
+add_action( 'init', 'wayup_register_custom_post_type' );
+
+function aletheme_metaboxes($meta_boxes) {
+	
+	$meta_boxes = array();
+
+    $prefix = "wayup_";
+
+    $meta_boxes[] = array(
+        'id'         => 'testimonial_metaboxes',
+        'title'      => 'Data for rewiev',
+        'pages'      => array( 'testimonial', ), // Post type
+        'context'    => 'normal',
+        'priority'   => 'high',
+        'show_names' => true, // Show field names on the left
+        //'show_on'    => array( 'key' => 'page-template', 'value' => array('template-press.php'), ), // Specific post templates to display this metabox
+        'fields' => array(
+            array(
+                'name' => 'Social link',
+                'desc' => 'Insert the Social link',
+                'id'   => $prefix . 'social_link',
+                'type' => 'text',
+            ),
+            array(
+              'name' => 'Date',
+              'desc' => 'Pick the Date',
+              'id'   => $prefix . 'tasty_date',
+              'type' => 'text_date',
+          ),
+        )
+    );
+// 6 lesson end
+
+	return $meta_boxes;
 }
